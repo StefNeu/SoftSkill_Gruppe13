@@ -1,2 +1,2 @@
-# SoftSkill_Gruppe13
-<a href="www.google.de"><Button>Hallo</Button></a> 
+# SoftSkills Sommerprojekt 
+Eine Projekt zur Verbesserung der Lebensqualität, geplant, designed und umgesetzt von Frauke Ahting, Kjell Hanken, Julian Kropp, Steffen Neumann und Manuel Wustlich
