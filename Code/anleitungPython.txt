@@ -1,0 +1,27 @@
+Anleitung für die Entwiklung für den RPi auf dem Pc
+
+!Ändere nicht was vor if __name__=="__main__": steht!
+
+Um auf dem Pc den Code zu testen, muss man eine Biblithek herunterladen.
+Die Bibliothe ist fake-rpigpio, diese instalirt man entweder über pip install fake-rpigpio odr unter PyCharm
+unter View -> Tool Windows -> Python Packages und gibt dan dort in die suchleiste fake-rpigpio ein unt instalirt
+ wirklich nur die Bibliothek die genau so heißt!
+
+ Wenn eine Fehlermeldung erscheint kann es sein das pip nicht instalirt ist, unter Linux kann man dann pip über den
+ Befehl: "sudo apt install pip3" instaliren.
+
+ Wichtig ist zum nutzen des Codes das Python3 instaliert ist, unter Linux ist der Befehl: "sudo apt isntall python3".
+
+ Befehle in PYthon zur nutzung der GPIO Pins
+
+ Alle Befehle starten mit GPIO , danacah folgt fast immer ein Punkt un dann die Funktion die man nutzen möchte.
+GPIO.setup(PIN, MODE)   stelt ein ob ich ein Pin als input oder Output nutzen möchte pin ist der Pin auf dem Rasperri
+GPIO.input(PIN)         fragt den angebenen PIN ab, die Ausgabe ist ein Bool wert.
+GPIO.output(PIN, ZUstand) Der angebene PIn wird je nach eingabe auf HIGH oder LOW gestellt dies wird über Bool werte
+                            gemacht TRUE = HIGH und FALSE = LOW.
+GPIO.cleanup() Gibt alle benutzen Pins wieder Frei
+
+Bei Fragen einfach Ancschreiben
+
+Die Belegung der pins https://www.elektronik-kompendium.de/sites/raspberry-pi/1907101.htm
+

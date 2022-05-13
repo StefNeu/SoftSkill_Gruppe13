@@ -13,11 +13,12 @@ except (RuntimeError, ModuleNotFoundError):
 
 # GPIO zeigt auf RPi.GPIO damit man weniger schreiben muss
 GPIO = RPi.GPIO
-
+#Einstellung wie die Pins aufgerufen werden
+GPIO.setmode(GPIO.BOARD)
 #Main
 if __name__=="__main__":
     print("Hello world")
-    GPIO.setmode(1)
+
 
 
 
