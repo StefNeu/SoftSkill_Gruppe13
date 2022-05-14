@@ -10,7 +10,7 @@ Wirklich nur die Bibliothek die genau so heißt!
  Wenn eine Fehlermeldung erscheint, kann es sein, dass pip nicht installiert ist, unter Linux kann man dann pip über den
  Befehl: "sudo apt install pip3" installieren.
 
- Wichtig zum Benutzen des Codes ist, dass Python3 installiert ist, unter Linux lautet der Befehl dazu: "sudo apt isntall python3".
+ Wichtig zum Benutzen des Codes ist, dass Python3 installiert ist, unter Linux lautet der Befehl dazu: "sudo apt install python3".
 
 Befehle in Python zur Nutzung der GPIO Pins:
 
