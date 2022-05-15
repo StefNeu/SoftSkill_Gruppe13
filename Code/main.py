@@ -1,9 +1,9 @@
-#Version = 0.0.1
-#Autor = Steffen Neumann
-#Programfunktion =
+# Version = 0.0.1
+# Autor = Steffen Neumann
+# Programmfunktion =
 
-#importe
-#Nicht ändern so lassen der code funktionirt so auf den Computer und auf den Rassperry
+# Importe
+# Nicht ändern, so lassen der Code funktioniert so auf dem Computer und auf dem Raspberry
 try:
     import RPi.GPIO
 except (RuntimeError, ModuleNotFoundError):
@@ -13,9 +13,9 @@ except (RuntimeError, ModuleNotFoundError):
 
 # GPIO zeigt auf RPi.GPIO damit man weniger schreiben muss
 GPIO = RPi.GPIO
-#Einstellung wie die Pins aufgerufen werden
+# Einstellung wie die Pins aufgerufen werden
 GPIO.setmode(GPIO.BOARD)
-#Main
+# Main
 if __name__=="__main__":
     print("Hello world")
 
