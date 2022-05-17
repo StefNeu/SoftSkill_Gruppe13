@@ -1,27 +1,29 @@
-Anleitung für die Entwiklung für den RPi auf dem Pc
+Anleitung für die Entwicklung für den RPi auf dem Pc
 
-!Ändere nicht was vor if __name__=="__main__": steht!
+!Ändere nicht, was vor if __name__=="__main__": steht!
 
-Um auf dem Pc den Code zu testen, muss man eine Biblithek herunterladen.
-Die Bibliothe ist fake-rpigpio, diese instalirt man entweder über pip install fake-rpigpio odr unter PyCharm
-unter View -> Tool Windows -> Python Packages und gibt dan dort in die suchleiste fake-rpigpio ein unt instalirt
- wirklich nur die Bibliothek die genau so heißt!
+Um auf dem PC den Code zu testen, muss man eine Bibliothek herunterladen.
+Die Bibliothek heißt fake-rpigpio. Diese installiert man entweder über pip install fake-rpigpio oder unter PyCharm:
+View -> Tool Windows -> Python Packages. In die Suchleiste gibt man dort "fake-rpigpio" ein und installiert.
+Wirklich nur die Bibliothek die genau so heißt!
 
- Wenn eine Fehlermeldung erscheint kann es sein das pip nicht instalirt ist, unter Linux kann man dann pip über den
- Befehl: "sudo apt install pip3" instaliren.
+ Wenn eine Fehlermeldung erscheint, kann es sein, dass pip nicht installiert ist, unter Linux kann man dann pip über den
+ Befehl: "sudo apt install pip3" installieren.
 
- Wichtig ist zum nutzen des Codes das Python3 instaliert ist, unter Linux ist der Befehl: "sudo apt isntall python3".
+ Wichtig zum Benutzen des Codes ist, dass Python3 installiert ist, unter Linux lautet der Befehl dazu: "sudo apt install python3".
 
- Befehle in PYthon zur nutzung der GPIO Pins
+Befehle in Python zur Nutzung der GPIO Pins:
 
- Alle Befehle starten mit GPIO , danacah folgt fast immer ein Punkt un dann die Funktion die man nutzen möchte.
-GPIO.setup(PIN, MODE)   stelt ein ob ich ein Pin als input oder Output nutzen möchte pin ist der Pin auf dem Rasperri
-GPIO.input(PIN)         fragt den angebenen PIN ab, die Ausgabe ist ein Bool wert.
-GPIO.output(PIN, ZUstand) Der angebene PIn wird je nach eingabe auf HIGH oder LOW gestellt dies wird über Bool werte
-                            gemacht TRUE = HIGH und FALSE = LOW.
-GPIO.cleanup() Gibt alle benutzen Pins wieder Frei
+Alle Befehle starten mit GPIO, danach folgt fast immer ein Punkt und dann die Funktion, die man nutzen möchte.
 
-Bei Fragen einfach Ancschreiben
+Beispielsweise:
 
-Die Belegung der pins https://www.elektronik-kompendium.de/sites/raspberry-pi/1907101.htm
+GPIO.setup(PIN, MODE)   stelt ein, ob ich einen Pin als Input oder Output nutzen möchte. Pin ist hierbei der Pin auf dem Raspberry.
+GPIO.input(PIN)         fragt den angegebenen PIN ab; die Ausgabe ist ein Bool.
+GPIO.output(PIN, ZUstand) Der angegebene Pin wird je nach Eingabe auf HIGH oder LOW gestellt, dies wird über Bools gemacht: TRUE = HIGH und FALSE = LOW.
+GPIO.cleanup() Gibt alle benutzen Pins wieder frei
+
+Bei Fragen einfach Anschreiben :)
+
+Die Belegung der Pins findet ihr hier https://www.elektronik-kompendium.de/sites/raspberry-pi/1907101.htm
 
