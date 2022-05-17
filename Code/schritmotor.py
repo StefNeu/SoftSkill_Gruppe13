@@ -4,13 +4,13 @@
 #für ULM2003A mit dem Schritmotor L293D
 #der Motor hat 512 schritte.
 #importe nicht ändern!
-import time
+import time                                         #die Time Bibliothek ist wichtig für das Delay
 try:
-    import RPi.GPIO
-except (RuntimeError, ModuleNotFoundError):
-    import fake_rpigpio.utils
-    fake_rpigpio.utils.install()
-GPIO = RPi.GPIO
+    import RPi.GPIO                                 #es wird versucht die richtige GPIO Liberi zu nutzen das funktionirt nur auf dem RPI
+except (RuntimeError, ModuleNotFoundError):         #Auf den Pc sorgt das für Fehler der wird hier abgefangen
+    import fake_rpigpio.utils                       #Die Bibliothek fake_rpigpio ersetzt die richtige GPIO Bibliothek
+    fake_rpigpio.utils.install()                    #Hier wird sie so implementirt das sie gleich funktionirt wie die echte Biblithek
+GPIO = RPi.GPIO                                     #Damit der Aufruf nicht so lange ist kann man die Bibliothek nun auch nur mit GPIO aufrufen
 #setzen der GPIO pin belegung
 GPIO.setmode(GPIO.BOARD)
 GPIO.setwarnings(False)                             #ausschaltend er Wanungsausgabe
