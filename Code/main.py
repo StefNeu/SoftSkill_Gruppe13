@@ -9,10 +9,13 @@ try:
 except (RuntimeError, ModuleNotFoundError):
     import fake_rpigpio.utils
     fake_rpigpio.utils.install()
+    RPi = fake_rpigpio.utils.RPi
     #GPIO.install()
 
 # GPIO zeigt auf RPi.GPIO damit man weniger schreiben muss
+
 GPIO = RPi.GPIO
+
 # Einstellung wie die Pins aufgerufen werden
 GPIO.setmode(GPIO.BOARD)
 # Main

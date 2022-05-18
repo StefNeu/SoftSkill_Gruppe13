@@ -1,0 +1,47 @@
+Anleitung für die Entwicklung für den Pico
+FÜr die Instalation in PyCharm muss als erstes MicroPython instalirt werden. Dafür unter File->Settings->Plugins
+und dan dort nach MicroPython suchen und instaliren. Danach muss die Ide neu Starten. Als nestes muss MicroPython
+noch aktivirt werden, dafür wieder auf File->Settings->Languages & Frameworks->MicroPython dort muss
+Enable MicroPython support aktivirt werden. Als nestest muss noch das Bord ausgewählt werden unter Device Type kann der
+Rasperry Pi Pico ausgewählt werden.
+
+Die Ide wird jetzt noch Fehlermeldungen anzeigenum alle Packete richtig zun instaliren muss einfach nur auf diese
+geklikt werden.
+
+Pins werden nicht wie beim z.B. Zero über GPIO aufgerufen sondern über Pin wobei die Pins einer Variablen zugeornet
+werden:
+
+variable = Pin(pinNummer, Mode)
+
+variable: über diese Variabel wird der Pin angesprochen, das heiß egal was wir mit dem Pin machen wir nutzen diese Variable
+pinNummer: Das ist die Physikalische Adresse des Pins
+Mode: der Mode entscheidet ob der Pin als Input oder Output genutz wird für Input schreiben wir Pin.IN und für output Pin.OUT
+
+Um einen Output pin nun High oder Low zu setzten haben zwei möglcihkeiten einmal:
+variable.on() für HIGH und variable.off() für LOW
+
+Die andere Möglichkeit ist variable.value(mode) wobei wir bei mode schreiben was mir wollen 1 für High oder 0 für Low.
+Dafür könne auch Variablen genutzt werden.
+
+Bein output gibt es noch die Möglichkeit das direkt wenn wir den Pin als Output setzten wir ein wert übergeben.
+Das geschit über variable = Pin(pinNummer, Pin.OUT, value=x) wobei x = 0 für Low oder 1 für High sein kann
+
+Wenn wir den Wert eines inputPin haben möchten nutzen wir auch wider value():
+variable.value()
+
+Wie beim output gibt es auch bein Input noch möglichkeit etwas bein setzten des Pins zu übergeben.
+Aber das kein Wert wie beim output, sondern die möglichkeit einen internen PullUp widerstand zu aktiviren.
+
+variable = Pin(pinNummer, Pin.IN, Pin.PULL_UP)
+
+Ein PullUp wiederstand zieht den Standertmässing auf High und der Knopf den wir z.B. nutzen muss den pin auf GND ziehen
+um eine Änderung an Pin zu erzeugen. !wichti! wir müssen dan auch nach 0 Abfragen!
+
+Bitte benet die classen so das erkenbar ist das für den Pico geignet sidn indem Ihr am Ende Pico schreibt.
+Wenn sie für beide genutzt werden kann bitte All schreiben.
+
+Bitte Konetirt euren Code so das jeder erkenne kan was gemacht worden ist zudem sollte immer der Name an den code Stehn
+den ihr geschriben habt so das jeder weiß wenner fragen kann. In den Programmen wo mehr als 1 dran schreiben bitte
+makiren wer was geschriben hat, damit wir wissen wenn man fragen kann.
+
+Bitte nutzt auch die Docstrings so ist besser nachzufolziehen wie man eine Programteille nutzen kann.

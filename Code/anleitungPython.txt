@@ -27,3 +27,9 @@ Bei Fragen einfach Anschreiben :)
 
 Die Belegung der Pins findet ihr hier https://www.elektronik-kompendium.de/sites/raspberry-pi/1907101.htm
 
+Für eine Anleitung für fake-rpigpio https://github.com/vapor-ware/fake-rpigpio   Nur wenn wir den Zero nutzen
+
+Anleitung für PyCharm für den Pico: https://themachineshop.uk/getting-started-with-the-pi-pico-and-pycharm/
+
+
+

@@ -1,22 +1,5 @@
-#
-#ULN2003
-#Code idee von https://tutorials-raspberrypi.de/raspberry-pi-schrittmotor-steuerung-l293d-uln2003a/
-#geändert von Steffen Neumann am 17.Mai.2022
-#für ULM2003A mit dem Schritmotor L293D und nur für den Zero oder ander richtige Rpis
-#der Motor hat 512 schritte.
-#importe nicht ändern!
-import time                                         #die Time Bibliothek ist wichtig für das Delay
-try:
-    import RPi.GPIO                                 #es wird versucht die richtige GPIO Liberi zu nutzen das funktionirt nur auf dem RPI
-except (RuntimeError, ModuleNotFoundError):         #Auf den Pc sorgt das für Fehler der wird hier abgefangen
-    import fake_rpigpio.utils                       #Die Bibliothek fake_rpigpio ersetzt die richtige GPIO Bibliothek
-    fake_rpigpio.utils.install()                    #Hier wird sie so implementirt das sie gleich funktionirt wie die echte Biblithek
-GPIO = RPi.GPIO                                     #Damit der Aufruf nicht so lange ist kann man die Bibliothek nun auch nur mit GPIO aufrufen
-#setzen der GPIO pin belegung
-GPIO.setmode(GPIO.BOARD)
-GPIO.setwarnings(False)                             #ausschaltend er Wanungsausgabe
-
-
+from machine import Pin
+import time
 class schritmotor():                                #Schritmotor classe
     def __init__(self, pinA, pinB, pinC, pinD):     #construktor
         self.coil_A_1_pin = pinA  # pink            #
@@ -45,20 +28,21 @@ class schritmotor():                                #Schritmotor classe
 
         # GPIO.setup(enable_pin, GPIO.OUT)
         #setzen der GPIO Pins
-        GPIO.setup(self.coil_A_1_pin, GPIO.OUT)     #
-        GPIO.setup(self.coil_A_2_pin, GPIO.OUT)     #
-        GPIO.setup(self.coil_B_1_pin, GPIO.OUT)     #
-        GPIO.setup(self.coil_B_2_pin, GPIO.OUT)     #
+
+        self.pinA = Pin(self.coil_A_1_pin,Pin.OUT)
+        self.pinB = Pin(self.coil_A_2_pin, Pin.OUT)
+        self.pinC = Pin(self.coil_B_1_pin, Pin.OUT)
+        self.pinD = Pin(self.coil_B_2_pin, Pin.OUT)
 
 
         # GPIO.output(enable_pin, 1)
 
     #funktion um die schrite zu setzen wird von den anderen funktionen genutzt
     def setStep(self , w1, w2, w3, w4):
-        GPIO.output(self.coil_A_1_pin, w1)
-        GPIO.output(self.coil_A_2_pin, w2)
-        GPIO.output(self.coil_B_1_pin, w3)
-        GPIO.output(self.coil_B_2_pin, w4)
+        self.pinA.value(w1)
+        self.pinB.value(w2)
+        self.pinC.value(w3)
+        self.pinD.value(w4)
 
     #funktion um den schritmotor nach rechtz zu drehen das Delay wird hinter jeden Step hinzugefügt
     def forward(self , delay, steps):
