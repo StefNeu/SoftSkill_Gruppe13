@@ -4,6 +4,7 @@
 
 # Importe
 # Nicht ändern, so lassen der Code funktioniert so auf dem Computer und auf dem Raspberry
+
 try:
     import RPi.GPIO
 except (RuntimeError, ModuleNotFoundError):
@@ -21,6 +22,7 @@ GPIO.setmode(GPIO.BOARD)
 # Main
 if __name__=="__main__":
     print("Hello world")
+    print(help(fake_rpigpio))
 
 
 
