@@ -1,6 +1,6 @@
-Solid Edge Translation To 3MF
-Date: Thursday,May 26,2022 06:15PM
-Output File: C:\Users\neuma\Documents\GitHub\SoftSkill_Gruppe13\3D\Uhr.3mf
+Solid Edge translation to FBX
+Date: Thursday,May 26,2022 08:04PM
+Output File: C:\Users\neuma\Documents\GitHub\SoftSkill_Gruppe13\3D\Uhr.fbx
 Author: Unknown
 Organization: Unknown
 Source System: SOLID EDGE
@@ -13,25 +13,22 @@ Installed Memory: 31.92 GB
 Software Information:
 Parasolid Version: 34.0.153
 PSBodyshop Version: 34.0.110
-3MF Adapter Version:9.0.87
+FBX Adapter Version: 9.0.94
 Solid Edge Version: 222.00.00.132 x64
 
-3MF Export Options
+FBX Export Options:
 Export Construction Solids:Off
 Export Displayed Parts:Off
+Export Construction Sheets:Off
 Enable Logging:On
-AllowInvalid3mfObjects:Off
+Export Textures:Off
 Export Flatten Assembly:On
-Export Units:Millimeters
-Export Tolerance Value:0.001000
+Export Construction Solids and Sheets if design bodies not present:Off
+Export Units:Centimeters
+Export Tolerance Value:1.250000
 Export Tolerance Type:Custom
-Export Surface Plane Angle Value:0.017453
-Export Author:Unknown
-Export Description:Unknown
-Export Organization:Unknown
-Export Program Name:Unknown
+Export Surface Plane Angle Value:0.523599
 
 Translation progress:
-Phase 1 of 1 Translating Parasolid to foreign data types...
 Translation process completed
-Time required to translate:00 : 00 : 01
+Time required to translate:00 : 00 : 00
