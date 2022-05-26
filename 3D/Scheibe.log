@@ -1,0 +1,37 @@
+Solid Edge Translation To 3MF
+Date: Thursday,May 26,2022 06:11PM
+Output File: C:\Users\neuma\Documents\GitHub\SoftSkill_Gruppe13\3D\Scheibe.3mf
+Author: Unknown
+Organization: Unknown
+Source System: SOLID EDGE
+
+Hardware:
+Processor: AMD Ryzen 7 2700X Eight-Core Processor         
+Operating System: Windows 10 Professional
+Installed Memory: 31.92 GB
+
+Software Information:
+Parasolid Version: 34.0.153
+PSBodyshop Version: 34.0.110
+3MF Adapter Version:9.0.87
+Solid Edge Version: 222.00.00.132 x64
+
+3MF Export Options
+Export Construction Solids:Off
+Export Displayed Parts:Off
+Enable Logging:On
+AllowInvalid3mfObjects:Off
+Export Flatten Assembly:On
+Export Units:Millimeters
+Export Tolerance Value:0.001000
+Export Tolerance Type:Custom
+Export Surface Plane Angle Value:0.017453
+Export Author:Unknown
+Export Description:Unknown
+Export Organization:Unknown
+Export Program Name:Unknown
+
+Translation progress:
+Phase 1 of 1 Translating Parasolid to foreign data types...
+Translation process completed
+Time required to translate:00 : 00 : 00
