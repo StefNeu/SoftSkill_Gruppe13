@@ -14,22 +14,22 @@ class sensoren{
 
   public:
   sensoren();
-  double tmp();
-  double lautsterke();
-  double druck();
-  double co();
-  double licht();
+  double temperature();
+  double volume();
+  double pressure();
+  double co2();
+  double light();
   double humidity();
   double tvoc();
   bool button();
-  String test();
+  
   
 
   private:
   DHTesp dht;
   Adafruit_BMP085 bmp;
   hp_BH1750 hp;
-  CCS811 co_voc(CCS811_ADDR);
+  
 
 };
 #endif

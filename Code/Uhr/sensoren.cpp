@@ -13,42 +13,39 @@ sensoren::sensoren(){
     hp.begin(BH1750_TO_GROUND);
     hp.calibrateTiming();
     hp.start();
-    CCS811 co_voc_(CCS811_ADDR);
-    co_voc = co_voc_;
+    
+    
     
     
 }
-String sensoren::test(){
-    String out;
-    if (!bmp.begin())
-    {
-        out = "bmp180 Fehler";
-    }
-    return out;
-    
-}
+
 double sensoren::humidity(){
     return dht.getHumidity();
 }
 
-double sensoren::tmp(){
+double sensoren::temperature(){
 
     return ((dht.getTemperature()+bmp.readTemperature())/2.0);
 }
 
-double sensoren::lautsterke(){return 0.0;}
+double sensoren::volume(){
+    return analogRead(0);
+    }
 
-double sensoren::druck(){return bmp.readPressure();}
+double sensoren::pressure(){return bmp.readPressure();}
 
-double sensoren::co(){
+double sensoren::co2(){
+    CCS811 co_voc(CCS811_ADDR);
     co_voc.readAlgorithmResults();
     return co_voc.getCO2();}
+
 double sensoren::tvoc(){
+    CCS811 co_voc(CCS811_ADDR);
     co_voc.readAlgorithmResults();
     return co_voc.getTVOC();
 }
 
-double sensoren::licht(){
+double sensoren::light(){
     double out = hp.getLux();
     hp.start();
 
