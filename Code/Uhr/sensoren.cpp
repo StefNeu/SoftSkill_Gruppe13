@@ -20,12 +20,43 @@ sensoren::sensoren(){
 }
 
 double sensoren::humidity(){
-    return dht.getHumidity();
+    
+    
+    
+
+        double humiditySaveT = dht.getHumidity();
+        if (humiditySaveT != NAN)
+        {
+            humiditySave = humiditySaveT;
+           
+        }
+        
+    
+
+    
+    return humiditySave;
 }
 
 double sensoren::temperature(){
+    
+    
+	  
 
-    return ((dht.getTemperature()+bmp.readTemperature())/2.0);
+        
+        double temperatureSaveT = dht.getTemperature();
+        if (temperatureSaveT != NAN)
+        {
+            temperatureSave = temperatureSaveT;
+            
+        }
+        
+		
+	
+	
+
+    
+
+    return ((temperatureSave+bmp.readTemperature())/2.0);
 }
 
 double sensoren::volume(){
