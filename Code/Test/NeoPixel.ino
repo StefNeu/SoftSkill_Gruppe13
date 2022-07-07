@@ -3,8 +3,7 @@
 #include <NTPClient.h>          // Ein NTPClient für die Verbindung zu einem Zeit Server: Zeitsynchronisation
 #include <WiFiUdp.h>            // wird fuer UDP-Kommunikation ueber Wifi benoetigt
 #include <PubSubClient.h>       // Client Library for sending and receiving MQTT messages
-#include <Adafruit_NeoPixel.h>  // For controlling single-wire-based LED pixels and strip (strip1: grosser Ring)
-#include <FastLED.h>            // for controlling dozens of different types of LEDs + optimized math, effect, noise functions (strip2: kleiner Ring)
+#include <FastLED.h>            // for controlling dozens of different types of LEDs + optimized math, effect, noise functions
 #include <bsec.h>               // gehoert zu BME680, erhaelt und verarbeitet BME680 Signale; erzeugt benoetigte Sensordatenausgaben
                                 // BME680 : Sensor fuer Luftqualitaet, Temparatur, Luftdruck, Luftfeuchtigkeit,...
 #include <hp_BH1750.h>          // High perfomance non-blocking library zur Benutzung des BH1750 Lichtsensors
@@ -31,19 +30,17 @@ const char *mqtt_pw = "SoftSkills";
 // ----------------------------------------------------------------------------
 
 // PINOUT: Pins an denen die Peripherie angeschlossen ist
-#define STRIP1 14 // D5   // Strip1: aeusserer Ringe mit 24 LEDs
+#define STRIP 14 // D5    // Strip1: aeusserer Ringe mit 24 LEDs
 #define NUM1 24
 
-#define STRIP2 12 // D6   // Strip2: innerer Ring mit 8 LEDs
-#define NUM2 8
+#define NUM2 8            // Strip2: innerer Ring mit 8 LEDs
 
 int button = 13; // D7    // Druckknopf zur Timersteuerung
 
-// NeoPixel
-Adafruit_NeoPixel strip1 = Adafruit_NeoPixel(NUM1, STRIP1, NEO_GRBW + NEO_KHZ800);
 // FastLED
-CRGB strip2[NUM2];
-CRGB lastLED[NUM2];       // Second Array to copy last LED state
+const int NUM = NUM1 + NUM2;
+CRGB strip[NUM];
+CRGB lastLED[NUM]; // Second Array to copy last LED state
 
 // BH1750
 hp_BH1750 BH1750;         // Erstellt ein Objekt zur Ansteuerung des BH1750 Sensors
@@ -104,14 +101,8 @@ void setup() {
   pinMode(button, INPUT);          // schaltet den Pin, an den der Button angeschlossen ist, auf Eingang
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, HIGH); // Turn build-in LED off
-  
-  // aeusserer Ring fuer Uhrzeit
-  strip1.begin();
-  strip1.clear();    // Initialize all pixels to 'off'
-  strip1.show();
 
-  // innerer Ringe fuer Timer
-  FastLED.addLeds<WS2812B, STRIP2, GRB>(strip2, NUM2);
+  FastLED.addLeds<WS2812B, STRIP, GRB>(strip, NUM);
   FastLED.clear(); // Initialize all pixels to 'off'
   FastLED.show();
 
@@ -166,12 +157,14 @@ void setup_wifi() {
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
-    if (num >= strip1.numPixels()) {
+    if (num >= NUM1) {
       num = 0;
     }
-    strip1.clear();
-    strip1.setPixelColor(num, strip1.Color(brightness, 0, 0, 0));
-    strip1.show();
+    for (int i = 0; i < NUM1; i++) {
+      strip[i] = CHSV(0, 0, 0);
+    }
+    strip[num] = CRGB(brightness, 0, 0);
+    FastLED.show();
     num++;
   }
   randomSeed(micros());
@@ -220,12 +213,14 @@ void reconnect() {
       client.publish(topic.c_str(), "A");
     } else {
       Serial.print(".");
-      if (num >= strip1.numPixels()) {
+      if (num >= NUM1) {
         num = 0;
       }
-      strip1.clear();
-      strip1.setPixelColor(num, strip1.Color(brightness, 0, 0, 0));
-      strip1.show();
+      for (int i = 0; i < NUM1; i++) {
+        strip[i] = CHSV(0, 0, 0);
+      }
+      strip[num] = CRGB(brightness, 0, 0);
+      FastLED.show();
       num++;
       delay(500);
     }
@@ -285,7 +280,7 @@ void callback(char *inTopic, byte *payload, unsigned int length) {
 
 // Light
 void startLight() {
-  memcpy(strip2, lastLED, sizeof(lastLED)); // Copy last state in current state
+  memcpy(strip, lastLED, sizeof(lastLED)); // Copy last state in current state
   FastLED.show(); 
   light = true;
   Serial.println("LIGHT: ON");
@@ -293,8 +288,6 @@ void startLight() {
   client.publish(topic.c_str(), "ON");
 }
 void stopLight() {
-  strip1.clear();
-  strip1.show();
   FastLED.clear(true);
   light = false;
   Serial.println("LIGHT: OFF");
@@ -319,20 +312,22 @@ void getTime() {
     Serial.print(minute);
     Serial.println();
 
-    hourLED = map(hour, 0, 12, 0, strip1.numPixels() - 1); // Map hour to LED number
-    minuteLED = map(minute, 0, 60, 0, strip1.numPixels() - 1); // Map minute to LED number
+    hourLED = map(hour, 0, 12, 0, NUM1 - 1); // Map hour to LED number
+    minuteLED = map(minute, 0, 60, 0, NUM1 - 1); // Map minute to LED number
   }
   updateClock();
 }
 
 void updateClock() {
   if (light) {
-    strip1.clear(); // All LEDs off
+        for (int i = 0; i < NUM1; i++) {
+      strip[i] = CHSV(0, 0, 0);
+    } // All LEDs on Strip1 off
     if (hourLED != minuteLED) { // Second LED (minute)
-      strip1.setPixelColor(minuteLED, strip1.Color(brightness, 0, 0, 0));
+      strip[minuteLED] = CRGB(brightness, 0, 0);
     }
-    strip1.setPixelColor(hourLED, strip1.Color(0, 0, 0, brightness)); // First LED
-    strip1.show();
+    strip[hourLED] = CHSV(0, 0, brightness); // First LED
+    FastLED.show();
   }
 }
 
@@ -390,26 +385,30 @@ void updateTimer() {
     }
     if (light) {
       // Pause
-      int past = map(1000 * 60 * timerBreak - (millis() - (startTime + 1000 * 60 * timerWork)), 0, 1000 * 60 * timerWork, strip1.numPixels() - 1, -1);
-      strip1.clear();
+      int past = map(1000 * 60 * timerBreak - (millis() - (startTime + 1000 * 60 * timerWork)), 0, 1000 * 60 * timerWork, NUM1 - 1, -1);
+      for (int i = 0; i < NUM1; i++) {
+        strip[i] = CHSV(0, 0, 0);
+      }
       if (past >= 0) {
         for (int i = 0; i <= past; i++) {
-           strip1.setPixelColor(strip1.numPixels() - 1 - i, strip1.Color(0, brightness, 0, 0)); // Green
+           strip[NUM1 - 1 - i] = CRGB(0, brightness, 0); // Green
         }
       }
-      strip1.show();
+      FastLED.show();
     }
   } else {
     if (light) {
        // Arbeiten
-       int past = map(1000 * 60 * timerWork - (millis() - startTime), 0, 1000 * 60 * timerWork, -1, strip1.numPixels() - 1);
-       strip1.clear();
+       int past = map(1000 * 60 * timerWork - (millis() - startTime), 0, 1000 * 60 * timerWork, -1, NUM1 - 1);
+       for (int i = 0; i < NUM1; i++) {
+         strip[i] = CHSV(0, 0, 0);
+       }
        if (past >= 0) {
          for (int i = 0; i <= past; i++) {
-            strip1.setPixelColor(i, strip1.Color(0, 0, 0, brightness)); // White
+            strip[i] = CHSV(0, 0, brightness); // White
          }
        }
-       strip1.show();
+       FastLED.show();
     }
   }
 }
@@ -460,23 +459,23 @@ void bme680() {
     int h = map(constrain(temp, 15, 25), 15, 25, 240, 0); // Map temperature to HSV scale between 240, 0
     if ((80 < h && h < 160) || !light) { // if light off or h green don't show
           //	unterdrueckt Normalwerte, zeigt nur oberes und unteres Drittel der Temperatur-Range auf strip2 an
-      strip2[0] = CRGB::Black;
+      strip[NUM1 + 0] = CRGB::Black;
     } else {
       Serial.println(h);
-      strip2[0] = CHSV(h, 255, brightness);
+      strip[NUM1 + 0] = CHSV(h, 255, brightness);
       FastLED.show();
-      lastLED[0] = CHSV(h, 255, brightness); // Make copy
+      lastLED[NUM1 + 0] = CHSV(h, 255, brightness); // Make copy
     }
     // Humidity
     float hum = BME680.humidity;
     h = map(constrain(hum, 40, 60), 40, 60, 0, 240); // Map humidity to HSV scale between 0, 240
     if ((80 < h && h < 160) || !light) { // if light off or h green don't show
-      strip2[1] = CRGB::Black;
+      strip[NUM1 + 1] = CRGB::Black;
     } else {
       Serial.println(h);
-      strip2[1] = CHSV(h, 255, brightness);
+      strip[NUM1 + 1] = CHSV(h, 255, brightness);
       FastLED.show();
-      lastLED[1] = CHSV(h, 255, brightness);
+      lastLED[NUM1 + 1] = CHSV(h, 255, brightness);
     }
     // IAQ
     if (BME680.iaqAccuracy > 0) { // IAQ Accuracy above 0 to get safe values
