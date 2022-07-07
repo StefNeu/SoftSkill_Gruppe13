@@ -1,14 +1,15 @@
 // Libraries
-#include <ESP8266WiFi.h>
-#include <NTPClient.h>
-#include <WiFiUdp.h>
-#include <PubSubClient.h>
-#include <FastLED.h>
-#include <bsec.h>
-#include <hp_BH1750.h>
+#include <ESP8266WiFi.h>        // Bibliothek, um ESP8266 mit einem Wifi-Netzwerk zu verbinden
+#include <NTPClient.h>          // Ein NTPClient für die Verbindung zu einem Zeit Server: Zeitsynchronisation
+#include <WiFiUdp.h>            // wird fuer UDP-Kommunikation ueber Wifi benoetigt
+#include <PubSubClient.h>       // Client Library for sending and receiving MQTT messages
+#include <FastLED.h>            // for controlling dozens of different types of LEDs + optimized math, effect, noise functions
+#include <bsec.h>               // gehoert zu BME680, erhaelt und verarbeitet BME680 Signale; erzeugt benoetigte Sensordatenausgaben
+                                // BME680 : Sensor fuer Luftqualitaet, Temparatur, Luftdruck, Luftfeuchtigkeit,...
+#include <hp_BH1750.h>          // High perfomance non-blocking library zur Benutzung des BH1750 Lichtsensors
 
 #ifdef __AVR__
-  #include <avr/power.h>
+  #include <avr/power.h>        // Power-reduction-management (Regulation Stromverbrauch)
 #endif
 
 // ----------------------------------------------------------------------------
@@ -28,13 +29,13 @@ const char *mqtt_pw = "SoftSkills";
 
 // ----------------------------------------------------------------------------
 
-// PINOUT
-#define STRIP 14 // D5
+// PINOUT: Pins an denen die Peripherie angeschlossen ist
+#define STRIP 14 // D5    // Strip1: aeusserer Ringe mit 24 LEDs
 #define NUM1 24
 
-#define NUM2 8
+#define NUM2 8            // Strip2: innerer Ring mit 8 LEDs
 
-int button = 13; // D7
+int button = 13; // D7    // Druckknopf zur Timersteuerung
 
 // FastLED
 const int NUM = NUM1 + NUM2;
@@ -42,53 +43,62 @@ CRGB strip[NUM];
 CRGB lastLED[NUM]; // Second Array to copy last LED state
 
 // BH1750
-hp_BH1750 BH1750;
+hp_BH1750 BH1750;         // Erstellt ein Objekt zur Ansteuerung des BH1750 Sensors
 
 // BME680
-Bsec BME680;
+Bsec BME680;              // Erstellt ein Objekt zur Ansteuerung des BME680 Sensors
 
 // Network
-WiFiUDP ntpUDP;
-NTPClient timeClient(ntpUDP, "pool.ntp.org");
-WiFiClient espClient;
-PubSubClient client(espClient);
+WiFiUDP ntpUDP;           // Objekt zur Kommunikation über WiFiUDP erzeugen
+NTPClient timeClient(ntpUDP, "pool.ntp.org");   // Teilt dem NTPClient die domain des NTP-Servers mit
+												                        //	und dass er zur Kommunikation ntpUDP nutzen soll
+WiFiClient espClient;     // Objekt zur Kommunikation über WiFi erzeugen
+PubSubClient client(espClient);     // Teilt dem PubSubClient mit, dass er zur Kommunikation 
+									                  //  espClient nutzen soll
 
 // Variables
 // Timer
-unsigned int timerWork = 25;
-unsigned int timerBreak = 5;
-boolean pomodoro = false; // Timer inactive
+unsigned int timerWork = 25;      // Zeit in Minuten: Arbeitsphase
+unsigned int timerBreak = 5;      // Zeit in Minuten: Pause danach
+boolean pomodoro = false;         // Timer inactive
 unsigned long startTime = 0;
-unsigned int sinceBoot = 0; // Completed timer since boot
-unsigned int inRow = 0; // Completed timer in a Row
+unsigned int sinceBoot = 0;       // Completed timer since boot
+unsigned int inRow = 0;           // Completed timer in a Row
 // Light
-boolean light = true; // LEDs on
-unsigned int brightness = 125;
-unsigned int num = 0; // global variable to move red light in circle through setup
-boolean automatic = true; // Brightness automatic instead of MQTT
+boolean light = true;             // LEDs on
+unsigned int brightness = 125;    // aktuelle Helligkeitseinstellung fuer die LEDs
+unsigned int num = 0;             // global variable to move red light in circle through setup
+                                  // holds the current position of the light on strip1
+boolean automatic = true;         // Brightness automatic instead of MQTT
 // Clock
-unsigned int minute; // Current minute
-unsigned int minuteLED; // LED corresponding to the current minute
-unsigned int hour; // Current hour
-unsigned int hourLED; // LED corresponding to the current hour
-unsigned long last = 0; // Timestamp of last calculation of minute and hour
+unsigned int minute;              // Current minute
+unsigned int minuteLED;           // Number of LED corresponding to the current minute
+unsigned int hour;                // Current hour
+unsigned int hourLED;             // Number of LED corresponding to the current hour
+unsigned long last = 0;           // Timestamp of last calculation of minute and hour
 // MQTT
-String id = String("cloc-") + String(ID); // ID 
-String topic; // Topic String to convert to char*
-char msg[8]; // Char Array to hold mqtt messages
+String id = String("cloc-") + String(ID); // individueller Name dieser Connection zu unserem mqtt-Server Account
+											                    // falls sich mehrere Geräte gleichzeitig mit unserem Account verbinden,
+											                    // braucht jedes seinen eigenen Namen
+String topic;       // Topic String to convert to char*
+char msg[8];        // Char Array to hold mqtt messages
+//
 // Button
-unsigned int lastState = 0; // Last Button State
+unsigned int lastState = 0;       // Zustand des Druckknopfes am Gehaeuse
+//
 // Lux
-float lastLux = 0;
-float lastLuxSend = 0;
-unsigned long lastBrightness = 0;
+float lastLux = 0;                  // vorheriger vom BH1750 erhaltene LUX-Wert oder 0 nach Neustart
+float lastLuxSend = 0;              // LUX-Wert der letzten Uebermittlung an mqtt-Server oder 0 nach Neustart
+unsigned long lastBrightness = 0;   // Zeitpunkt der letzten LUX-Uebermittlung an mqtt-Server oder 0 nach Neustart
 
+//
 // Setup
+//
 void setup() {
   Serial.begin(115200);
-  Wire.begin(); // Enable i2c
+  Wire.begin(); // Enable i2c, i.e. join i2c bus for BME680 communication
   
-  pinMode(button, INPUT); // Button pin input
+  pinMode(button, INPUT);          // schaltet den Pin, an den der Button angeschlossen ist, auf Eingang
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, HIGH); // Turn build-in LED off
 
@@ -103,13 +113,17 @@ void setup() {
     Serial.println("BH1750 NOT FOUND");
   }
   BME680.begin(BME680_I2C_ADDR_PRIMARY, Wire);
+      // BME680_I2C_ADDR_PRIMARY: Device identifier parameter for the read/write interface functions
+      // Wire: Physical communication interface
+      // Teilt dem BME680-Object mit, dass er ueber Wire(I2C) mit der ID (BME680_I2C_ADDR_PRIMARY)
+      //  kommunizieren soll/kann
   if (BME680.status != BSEC_OK || BME680.bme680Status != BME680_OK) {
     Serial.print("FAIL ");
     Serial.print(BME680.status);
     Serial.print(" : ");
     Serial.println(BME680.bme680Status);
   }
-  bsec_virtual_sensor_t sensorList[10] =
+  bsec_virtual_sensor_t sensorList[10] =    // definiert Liste der gewuenschten Sensordaten
   {
     BSEC_OUTPUT_RAW_TEMPERATURE,
     BSEC_OUTPUT_RAW_PRESSURE,
@@ -123,14 +137,15 @@ void setup() {
     BSEC_OUTPUT_SENSOR_HEAT_COMPENSATED_HUMIDITY,
   };
   BME680.updateSubscription(sensorList, 10, BSEC_SAMPLE_RATE_LP);
+      // meldet Liste der gewuenschten Sensordaten und die gewuenschte Probenrate an den BME680
 
   setup_wifi();
   timeClient.begin(); // NTP Time
-  timeClient.setTimeOffset(7200);
+  timeClient.setTimeOffset(7200);           // legt aktuelle Zeitzone fest; TODO: ueber Konstante im Kopfbereich (aenderbar)
   client.setServer(mqtt_server, mqtt_port); // MQTT
-  client.setCallback(callback);
-
-  getTime();
+  client.setCallback(callback);             // Teilt client mit, dass jedes Mal wenn Daten vom mqtt-Server kommen,
+                                            //  die Rountine "callback" aufzurufen ist
+  getTime();          // Aktualisierung der Systemzeit
 }
 
 void setup_wifi() {
@@ -280,9 +295,9 @@ void stopLight() {
   client.publish(topic.c_str(), "OFF");
 }
 
-// Clock
+// Clock:     timeClient holt die aktuelle Zeit uebers Internet vom NTP-Server
 void getTime() {
-  if (millis() - last > 30000 || last == 0) { // LAst update > 3000 or just booted
+  if (millis() - last > 30000 || last == 0) { // Last update > 3000 or just booted
     timeClient.update();
     last = millis();
 
@@ -297,8 +312,8 @@ void getTime() {
     Serial.print(minute);
     Serial.println();
 
-    hourLED = map(hour, 0, 12, 0, NUM1 - 1); // Map hour to LED
-    minuteLED = map(minute, 0, 60, 0, NUM1 - 1); // Map minute to LED
+    hourLED = map(hour, 0, 12, 0, NUM1 - 1); // Map hour to LED number
+    minuteLED = map(minute, 0, 60, 0, NUM1 - 1); // Map minute to LED number
   }
   updateClock();
 }
@@ -405,13 +420,17 @@ void bh1750() {
     float lux = BH1750.getLux();
     BH1750.start();
     if (abs(lux - lastLux) > 3 || lastLux == 0) { // Value changed more than 3 or just booted
-      lastLux = lux;
-      if (automatic) {
+      lastLux = lux;    // lux als neuer Referenzwert gemerkt
+      if (automatic) { // falls Lichtsteuerung automatisch: brightness fuer die Anzeigen neu berechnet
         brightness = map(constrain(lux, 8, 255), 0, 150, 8, 255); // Map Lux to brightness scale
       }
     }
-    if (millis() - lastBrightness > 5000 || lastBrightness == 0) { // Send lux through MQTT every 5 seconds if value changed more than 3
-      if (abs(lux - lastLuxSend) > 3 || lastLuxSend == 0) { 
+    if (abs(lux - lastLuxSend) > 3 || lastLuxSend == 0) {
+          // an den mqtt-Server werden nur Aenderungen des LUX-Wertes von mehr als 3 uebermittelt
+          // oder der neue Wert nach einem Neustart des Geraetes
+      if (millis() - lastBrightness > 5000 || lastBrightness == 0) { // Send lux through MQTT every 5 seconds if value changed more than 3
+            // um den mqtt-Server nicht mit Nachrichten zu ueberschwemmen, 
+            // muessen mindestens 5 Sekunden zwischen zwei Uebermittlungen liegen
         lastLuxSend = lux;
         topic = id + "/sens/lux";
         dtostrf(lux, 3, 1, msg); // Convert float to char*
@@ -424,7 +443,8 @@ void bh1750() {
 
 // BME680
 void bme680() {
-  if (BME680.run()) { // new value arrived
+  if (BME680.run()) { // fragt die Bsec-library, ob am bme680 neue Messwerte vorliegen
+    // new value arrived
     String output = String(BME680.iaq);
     output += ", " + String(BME680.iaqAccuracy);
     output += ", " + String(BME680.temperature);
@@ -437,7 +457,8 @@ void bme680() {
     // Temperature
     float temp = BME680.temperature;
     int h = map(constrain(temp, 15, 25), 15, 25, 240, 0); // Map temperature to HSV scale between 240, 0
-    if ((h < 160 && h > 80) || !light) { // if light off or h green don't show
+    if ((80 < h && h < 160) || !light) { // if light off or h green don't show
+          //	unterdrueckt Normalwerte, zeigt nur oberes und unteres Drittel der Temperatur-Range auf strip2 an
       strip[NUM1 + 0] = CRGB::Black;
     } else {
       Serial.println(h);
@@ -448,7 +469,7 @@ void bme680() {
     // Humidity
     float hum = BME680.humidity;
     h = map(constrain(hum, 40, 60), 40, 60, 0, 240); // Map humidity to HSV scale between 0, 240
-    if ((h < 160 && h > 80) || !light) { // if light off or h green don't show
+    if ((80 < h && h < 160) || !light) { // if light off or h green don't show
       strip[NUM1 + 1] = CRGB::Black;
     } else {
       Serial.println(h);
@@ -460,7 +481,7 @@ void bme680() {
     if (BME680.iaqAccuracy > 0) { // IAQ Accuracy above 0 to get safe values
       
     }
-  } else if (BME680.status != BSEC_OK || BME680.bme680Status != BME680_OK) { // Fail
+  } else if (BME680.status != BSEC_OK || BME680.bme680Status != BME680_OK) { // prueft ob Fehlersituation vorliegt
     Serial.print("FAIL ");
     Serial.print(BME680.status);
     Serial.print(" : ");
