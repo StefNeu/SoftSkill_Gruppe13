@@ -148,6 +148,7 @@ void setup() {
   getTime();          // Aktualisierung der Systemzeit
 }
 
+// verbindet das Geraet mit dem WLAN
 void setup_wifi() {
   delay(10);
   Serial.println();
@@ -157,6 +158,7 @@ void setup_wifi() {
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
+    // waehrend des Wartens auf die Wifi-Connection laeuft ein Punkt ueber den Pixel-Ring
     if (num >= NUM1) {
       num = 0;
     }
@@ -167,12 +169,13 @@ void setup_wifi() {
     FastLED.show();
     num++;
   }
-  randomSeed(micros());
+  randomSeed(micros());			// seeden des random-generators mit der aktuellen Zeit, TODO: wofuer?
   Serial.println();
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
 }
 
+// verbindet das Geraet (ueber das WLAN) mit dem mqtt-Server der Uni
 void reconnect() {
       Serial.print("Connecting to ");
     Serial.println(mqtt_server);
@@ -213,6 +216,7 @@ void reconnect() {
       client.publish(topic.c_str(), "A");
     } else {
       Serial.print(".");
+      // waehrend des Wartens auf die Wifi-Connection laeuft ein Punkt ueber den Pixel-Ring
       if (num >= NUM1) {
         num = 0;
       }
@@ -227,7 +231,7 @@ void reconnect() {
   }
 }
 
-// Callback
+// Callback: verarbeitet einen Callback vom mqtt-Server
 void callback(char *inTopic, byte *payload, unsigned int length) {
   String newTopic = inTopic;
   payload[length] = '\0';
@@ -257,7 +261,7 @@ void callback(char *inTopic, byte *payload, unsigned int length) {
     } else {
       automatic = false;
       brightness = map(constrain(intPayload, 8, 255), 0, 100, 8, 255);
-      sprintf(msg, "%d", intPayload);
+      sprintf(msg, "%d", intPayload);			// TODO: Hier sollte constrain(intPayload, 8, 255) zurueckgegeben werden
       topic = id + "/light/brightness/status";
       client.publish(topic.c_str(), msg);
     }
@@ -320,9 +324,11 @@ void getTime() {
 
 void updateClock() {
   if (light) {
-        for (int i = 0; i < NUM1; i++) {
+    // Switch all LEDs on Strip off
+    for (int i = 0; i < NUM1; i++) {
       strip[i] = CHSV(0, 0, 0);
-    } // All LEDs on Strip1 off
+    }
+    // zeigt Stunden- und Minuten-LED an: Stunden-LED hat Vorrang bei Gleichstand
     if (hourLED != minuteLED) { // Second LED (minute)
       strip[minuteLED] = CRGB(brightness, 0, 0);
     }
@@ -352,12 +358,13 @@ void startTimer() {
   Serial.println("TIMER: ON");
   topic = id + "/timer/status";
   client.publish(topic.c_str(), "ON");
+  // uebermittelt Anzahl der bereits abgeschlossenen Timer-Zyklen an mqtt-Server
   if (sinceBoot > 0) {
     topic = id + "/timer/counter/sinceBoot";
     sprintf(msg, "%d", sinceBoot);
     client.publish(topic.c_str(), msg);
   }
-  if (inRow == 0) {
+  if (inRow == 0) {	// TODO: warum nicht inRow >= 0 ? then und else if unterscheiden sich nicht
     topic = id + "/timer/counter/inRow";
     sprintf(msg, "%d", inRow);
     client.publish(topic.c_str() , msg);
@@ -368,7 +375,7 @@ void startTimer() {
   }
 }
 
-void stopTimer() {
+void stopTimer() {	// TODO: warum werden nicht die letzten aktuellen Daten an den mqtt-Server uebermittelt ?
   pomodoro = false;
   inRow = 0;
   Serial.println("TIMER: OFF");
@@ -378,19 +385,21 @@ void stopTimer() {
 
 void updateTimer() {
   if (millis() - startTime > 1000 * 60 * timerWork) { // Work time finished
-    if (millis() - startTime > 1000 * 60 * (timerWork + timerBreak)) { // Timer finished
+    if (millis() - startTime > 1000 * 60 * (timerWork + timerBreak)) { // Timer finished: Arbeitszeit + Pausenzeit abgelaufen
       sinceBoot++;
       inRow++; // increment counter
       return startTimer(); // Start new timer
     }
     if (light) {
-      // Pause
-      int past = map(1000 * 60 * timerBreak - (millis() - (startTime + 1000 * 60 * timerWork)), 0, 1000 * 60 * timerWork, NUM1 - 1, -1);
+      // Pause laeuft:
+      //  mapt die Restpausenzeit relativ zur Arbeitszeit (nutzt nur einen Teil des Kreisbogens fuer Pausenanzeige)
+      //  zeigt in einem Kreisbogen am Ende des Rings in gruen die Restpause an
+      int remaining = map(1000 * 60 * timerBreak - (millis() - (startTime + 1000 * 60 * timerWork)), 0, 1000 * 60 * timerWork, NUM1 - 1, -1);
       for (int i = 0; i < NUM1; i++) {
         strip[i] = CHSV(0, 0, 0);
       }
-      if (past >= 0) {
-        for (int i = 0; i <= past; i++) {
+      if (remaining >= 0) {
+        for (int i = 0; i <= remaining; i++) {
            strip[NUM1 - 1 - i] = CRGB(0, brightness, 0); // Green
         }
       }
@@ -398,14 +407,16 @@ void updateTimer() {
     }
   } else {
     if (light) {
-       // Arbeiten
+       // Arbeitsphase laeuft:
+       //  mapt verbleibende Arbeitszeit in diesem Timer-Zyklus relativ zur Laenge des Arbeitszyklus
+       //  auf eine LED-Nummer auf Strip
        int past = map(1000 * 60 * timerWork - (millis() - startTime), 0, 1000 * 60 * timerWork, -1, NUM1 - 1);
        for (int i = 0; i < NUM1; i++) {
          strip[i] = CHSV(0, 0, 0);
        }
        if (past >= 0) {
          for (int i = 0; i <= past; i++) {
-            strip[i] = CHSV(0, 0, brightness); // White
+            strip[i] = CHSV(0, 0, brightness); // zeigt in einem Kreisbogen Restzeit in weiß an
          }
        }
        FastLED.show();
@@ -417,9 +428,10 @@ void updateTimer() {
 // BH1750
 void bh1750() {
   if (BH1750.hasValue() == true) {
+    // wenn neue Werte anliegen, neuen LUX-Wert lesen
     float lux = BH1750.getLux();
     BH1750.start();
-    if (abs(lux - lastLux) > 3 || lastLux == 0) { // Value changed more than 3 or just booted
+    if (abs(lux - lastLux) > 3 || lastLux == 0) { // Value changed more than 3 since last measurement or just booted
       lastLux = lux;    // lux als neuer Referenzwert gemerkt
       if (automatic) { // falls Lichtsteuerung automatisch: brightness fuer die Anzeigen neu berechnet
         brightness = map(constrain(lux, 8, 255), 0, 150, 8, 255); // Map Lux to brightness scale
