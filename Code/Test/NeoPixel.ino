@@ -10,16 +10,18 @@
 // Libraries
 #include <ESP8266WiFi.h>        // Bibliothek, um ESP8266 mit einem Wifi-Netzwerk zu verbinden
 #include <NTPClient.h>          // Ein NTPClient für die Verbindung zu einem Zeit Server: Zeitsynchronisation
-#include <WiFiUdp.h>            // wird fuer UDP-Kommunikation ueber Wifi benoetigt
-#include <PubSubClient.h>       // Client Library for sending and receiving MQTT messages
-#include <FastLED.h>            // for controlling dozens of different types of LEDs + optimized math, effect, noise functions
-#include <bsec.h>               // gehoert zu BME680, erhaelt und verarbeitet BME680 Signale; erzeugt benoetigte Sensordatenausgaben
-                                // BME680 : Sensor fuer Luftqualitaet, Temparatur, Luftdruck, Luftfeuchtigkeit,...
+#include <WiFiUdp.h>            // wird für UDP-Kommunikation über Wifi benötigt
+#include <PubSubClient.h>       // Bibliothek zum Senden und Empfangen von MQTT Nachrichten
+#include <FastLED.h>            // zum Steuern der LED Ringe
+#include <bsec.h>               // gehoert zu BME680, erhält und verarbeitet BME680 Signale; erzeugt benötigte Sensordatenausgaben
+                                // BME680 : Sensor für Luftqualität, Temparatur, Luftdruck, Luftfeuchtigkeit,...
 #include <hp_BH1750.h>          // High perfomance non-blocking library zur Benutzung des BH1750 Lichtsensors
+// #include <ESP8266TimerInterrupt.h>
 
 #ifdef __AVR__
   #include <avr/power.h>        // Power-reduction-management (Regulation Stromverbrauch)
 #endif
+// #define TIMER_INTERVAL_MS       10000
 
 // ----------------------------------------------------------------------------
 
@@ -36,20 +38,25 @@ const int mqtt_port = 2883;
 const char *mqtt_user = "sutk";
 const char *mqtt_pw = "SoftSkills";
 
+// Zeitzone
+const int timezone = 2; // Differenz zu UTC
+
 // ----------------------------------------------------------------------------
 
 // PINOUT: Pins an denen die Peripherie angeschlossen ist
-#define STRIP 14 // D5    // Strip1: aeusserer Ringe mit 24 LEDs
-#define NUM1 24
+#define STRIP 14 // D5    // Strip1: äußerer Ringe mit 24 LEDs
+#define NUM 24
 
-#define NUM2 8            // Strip2: innerer Ring mit 8 LEDs
+#define STRIP2 12 // D6   // Strip2: innerer Ring mit 8 LEDs
+#define NUM2 8            
 
 int button = 13; // D7    // Druckknopf zur Timersteuerung
 
 // FastLED
-const int NUM = NUM1 + NUM2;
 CRGB strip[NUM];
-CRGB lastLED[NUM]; // Second Array to copy last LED state
+CRGB strip2[NUM2];
+
+CRGB lastLED[NUM2];       // Zweites Array um den letzten Zustand zu speichern
 
 // BH1750
 hp_BH1750 BH1750;         // Erstellt ein Objekt zur Ansteuerung des BH1750 Sensors
@@ -59,80 +66,96 @@ Bsec BME680;              // Erstellt ein Objekt zur Ansteuerung des BME680 Sens
 
 // Network
 WiFiUDP ntpUDP;           // Objekt zur Kommunikation über WiFiUDP erzeugen
-NTPClient timeClient(ntpUDP, "pool.ntp.org");   // Teilt dem NTPClient die domain des NTP-Servers mit
-												                        //	und dass er zur Kommunikation ntpUDP nutzen soll
+NTPClient timeClient(ntpUDP, "pool.ntp.org");   // Teilt dem NTPClient die Domain des NTP-Servers mit
+                                                //  und dass er zur Kommunikation ntpUDP nutzen soll
 WiFiClient espClient;     // Objekt zur Kommunikation über WiFi erzeugen
 PubSubClient client(espClient);     // Teilt dem PubSubClient mit, dass er zur Kommunikation 
-									                  //  espClient nutzen soll
+                                    //  espClient nutzen soll
+// ESP8266Timer ITimer;
 
 // Variables
 // Timer
 unsigned int timerWork = 25;      // Zeit in Minuten: Arbeitsphase
 unsigned int timerBreak = 5;      // Zeit in Minuten: Pause danach
-boolean pomodoro = false;         // Timer inactive
+boolean pomodoro = false;         // Timer inaktiv
 unsigned long startTime = 0;
-unsigned int sinceBoot = 0;       // Completed timer since boot
-unsigned int inRow = 0;           // Completed timer in a Row
+unsigned int sinceBoot = 0;       // Abgeschlossene Timer seit Boot
+unsigned int inRow = 0;           // Abgeschlossene Timer in Reihe
 // Light
-boolean light = true;             // LEDs on
-unsigned int brightness = 125;    // aktuelle Helligkeitseinstellung fuer die LEDs
-unsigned int num = 0;             // global variable to move red light in circle through setup
-                                  // holds the current position of the light on strip1
-boolean automatic = true;         // Brightness automatic instead of MQTT
+boolean light = true;             // LEDs an
+unsigned int brightness = 125;    // aktuelle Helligkeitseinstellung für die LEDs
+unsigned int num = 0;             // globale Variable zum bewegen eines rotes Lichtes während der Einrichtung
+                                  // hält den aktuellen Index
+boolean automatic = true;         // Steuert ob die Helligkeit über der Helligkeitssensor oder über MQTT gesteuert wird
 // Clock
-unsigned int minute;              // Current minute
-unsigned int minuteLED;           // Number of LED corresponding to the current minute
-unsigned int hour;                // Current hour
-unsigned int hourLED;             // Number of LED corresponding to the current hour
-unsigned long last = 0;           // Timestamp of last calculation of minute and hour
+unsigned int minute;              // Aktuelle Zeit
+unsigned int minuteLED;           // Index der korrespondierenden LED zur Minute
+unsigned int hour;
+unsigned int hourLED;             // Index der korrespondierenden LED zur Minute
+unsigned long last = 0;           // Timestamp der letzen Zeitabfrage
 // MQTT
 String id = String("cloc-") + String(ID); // individueller Name dieser Connection zu unserem mqtt-Server Account
-											                    // falls sich mehrere Geräte gleichzeitig mit unserem Account verbinden,
-											                    // braucht jedes seinen eigenen Namen
-String topic;       // Topic String to convert to char*
-char msg[8];        // Char Array to hold mqtt messages
+                                          // falls sich mehrere Geräte gleichzeitig mit unserem Account verbinden,
+                                          // braucht jedes seinen eigenen Namen
+String topic;                     // Topic String zum Konvertieren in ein Char Array
+char msg[8];                      // Char Array zum Versenden von MQTT Nachrichten
 //
 // Button
-unsigned int lastState = 0;       // Zustand des Druckknopfes am Gehaeuse
+unsigned int lastState = 0;       // Zustand des Druckknopfes am Gehäuse
 //
 // Lux
 float lastLux = 0;                  // vorheriger vom BH1750 erhaltene LUX-Wert oder 0 nach Neustart
-float lastLuxSend = 0;              // LUX-Wert der letzten Uebermittlung an mqtt-Server oder 0 nach Neustart
-unsigned long lastBrightness = 0;   // Zeitpunkt der letzten LUX-Uebermittlung an mqtt-Server oder 0 nach Neustart
+float lastLuxSend = 0;              // LUX-Wert der letzten Uebermittlung an MQTT-Server oder 0 nach Neustart
+unsigned long lastBrightness = 0;   // Zeitpunkt der letzten LUX-Übermittlung an MQTT-Server oder 0 nach Neustart
+
+boolean sens = false;
+
+// void IRAM_ATTR TimerHandler() {
+//  sens = true;
+// }
 
 //
 // Setup
 //
 void setup() {
   Serial.begin(115200);
-  Wire.begin(); // Enable i2c, i.e. join i2c bus for BME680 communication
+  delay(300);
+  
+  Wire.begin(); // Starte I2C
+
+  // Interval in microsecs
+  // if (ITimer.attachInterruptInterval(TIMER_INTERVAL_MS * 1000, TimerHandler)) {
+  //  Serial.print("Starting ITimer OK");
+  // } else {
+  //   Serial.println("Can't set ITimer correctly. Select another freq. or interval");
+  // }
   
   pinMode(button, INPUT);          // schaltet den Pin, an den der Button angeschlossen ist, auf Eingang
   pinMode(LED_BUILTIN, OUTPUT);
-  digitalWrite(LED_BUILTIN, HIGH); // Turn build-in LED off
+  digitalWrite(LED_BUILTIN, HIGH); // Schalte build-in LED aus
 
-  FastLED.addLeds<WS2812B, STRIP, GRB>(strip, NUM);
+  FastLED.addLeds<WS2812B, STRIP, GRB>(strip, NUM).setCorrection(TypicalLEDStrip); // Initalisierung der LEDs und Farbkorrektur
+  FastLED.addLeds<WS2812B, STRIP2, GRB>(strip2, NUM2).setCorrection(TypicalLEDStrip);
+  FastLED.setMaxPowerInVoltsAndMilliamps(5, 300); // Maximalleistung begrenzen
   FastLED.clear(); // Initialize all pixels to 'off'
   FastLED.show();
 
-  // Initialize BME680
-  if (BH1750.begin(BH1750_TO_GROUND)) { // check for BME680
+  // Initialisiere BME680
+  if (BH1750.begin(BH1750_TO_GROUND)) { // check BME680
     BH1750.start();
   } else {
     Serial.println("BH1750 NOT FOUND");
   }
   BME680.begin(BME680_I2C_ADDR_PRIMARY, Wire);
-      // BME680_I2C_ADDR_PRIMARY: Device identifier parameter for the read/write interface functions
-      // Wire: Physical communication interface
-      // Teilt dem BME680-Object mit, dass er ueber Wire(I2C) mit der ID (BME680_I2C_ADDR_PRIMARY)
-      //  kommunizieren soll/kann
+  // Teilt dem BME680-Objekt mit, dass er über Wire(I2C) mit der ID (BME680_I2C_ADDR_PRIMARY)
+  //  kommunizieren soll/kann
   if (BME680.status != BSEC_OK || BME680.bme680Status != BME680_OK) {
     Serial.print("FAIL ");
     Serial.print(BME680.status);
     Serial.print(" : ");
     Serial.println(BME680.bme680Status);
   }
-  bsec_virtual_sensor_t sensorList[10] =    // definiert Liste der gewuenschten Sensordaten
+  bsec_virtual_sensor_t sensorList[10] =    // definiert Liste der gewünschten Sensordaten
   {
     BSEC_OUTPUT_RAW_TEMPERATURE,
     BSEC_OUTPUT_RAW_PRESSURE,
@@ -146,18 +169,18 @@ void setup() {
     BSEC_OUTPUT_SENSOR_HEAT_COMPENSATED_HUMIDITY,
   };
   BME680.updateSubscription(sensorList, 10, BSEC_SAMPLE_RATE_LP);
-      // meldet Liste der gewuenschten Sensordaten und die gewuenschte Probenrate an den BME680
+      // meldet Liste der gewünschten Sensordaten und die gewünschte Probenrate an den BME680
 
   setup_wifi();
   timeClient.begin(); // NTP Time
-  timeClient.setTimeOffset(7200);           // legt aktuelle Zeitzone fest; TODO: ueber Konstante im Kopfbereich (aenderbar)
+  timeClient.setTimeOffset(60*60*timezone);           // legt aktuelle Zeitzone fest
   client.setServer(mqtt_server, mqtt_port); // MQTT
-  client.setCallback(callback);             // Teilt client mit, dass jedes Mal wenn Daten vom mqtt-Server kommen,
+  client.setCallback(callback);             // Teilt client mit, dass jedes Mal wenn Daten vom MQTT-Server kommen,
                                             //  die Rountine "callback" aufzurufen ist
   getTime();          // Aktualisierung der Systemzeit
 }
 
-// verbindet das Geraet mit dem WLAN
+// verbindet das Gerät mit dem WLAN
 void setup_wifi() {
   delay(10);
   Serial.println();
@@ -167,27 +190,25 @@ void setup_wifi() {
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
-    // waehrend des Wartens auf die Wifi-Connection laeuft ein Punkt ueber den Pixel-Ring
-    if (num >= NUM1) {
+    // während des Wartens auf die Wifi-Connection läuft ein Punkt über den Pixel-Ring
+    if (num >= NUM2) {
       num = 0;
     }
-    for (int i = 0; i < NUM1; i++) {
-      strip[i] = CHSV(0, 0, 0);
-    }
-    strip[num] = CRGB(brightness, 0, 0);
+    FastLED.clear();
+    strip2[num] = CRGB(brightness, 0, 0);
     FastLED.show();
     num++;
   }
-  randomSeed(micros());			// seeden des random-generators mit der aktuellen Zeit, TODO: wofuer?
   Serial.println();
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
+  FastLED.clear();
 }
 
-// verbindet das Geraet (ueber das WLAN) mit dem mqtt-Server der Uni
+// verbindet das Gerät (über das WLAN) mit dem MQTT-Server der Uni
 void reconnect() {
-      Serial.print("Connecting to ");
-    Serial.println(mqtt_server);
+  Serial.print("Connecting to ");
+  Serial.println(mqtt_server);
   while (!client.connected()) {
     if (client.connect(id.c_str(), mqtt_user, mqtt_pw)) {
       Serial.print("connected as ");
@@ -204,7 +225,7 @@ void reconnect() {
       topic = id + "/timer/duration/break";
       client.subscribe(topic.c_str());
 
-      // Publish default values on reconnect
+      // Veröffentliche default Werte beim Booten
       topic = id + "/light/status";
       client.publish(topic.c_str(), "ON");
       topic = id + "/timer/status";
@@ -225,22 +246,13 @@ void reconnect() {
       client.publish(topic.c_str(), "A");
     } else {
       Serial.print(".");
-      // waehrend des Wartens auf die Wifi-Connection laeuft ein Punkt ueber den Pixel-Ring
-      if (num >= NUM1) {
-        num = 0;
-      }
-      for (int i = 0; i < NUM1; i++) {
-        strip[i] = CHSV(0, 0, 0);
-      }
-      strip[num] = CRGB(brightness, 0, 0);
-      FastLED.show();
-      num++;
-      delay(500);
+      // Warten auf die MQTT Verbindung
+      delay(5000);
     }
   }
 }
 
-// Callback: verarbeitet einen Callback vom mqtt-Server
+// Callback: verarbeitet eine Nachricht vom MQTT-Server
 void callback(char *inTopic, byte *payload, unsigned int length) {
   String newTopic = inTopic;
   payload[length] = '\0';
@@ -269,8 +281,8 @@ void callback(char *inTopic, byte *payload, unsigned int length) {
       client.publish(topic.c_str(), "A");
     } else {
       automatic = false;
-      brightness = map(constrain(intPayload, 8, 255), 0, 100, 8, 255);
-      sprintf(msg, "%d", intPayload);			// TODO: Hier sollte constrain(intPayload, 8, 255) zurueckgegeben werden
+      brightness = map(constrain(intPayload, 8, 255), 0, 100, 8, 255); // Bei 8 geht der LED Ring aus, daher muss dies die untere Grenze sein
+      sprintf(msg, "%d", intPayload);     // TODO: Hier sollte constrain(intPayload, 8, 255) zurueckgegeben werden; KJELL: nein der Wert soll in Prozent gesteuert werden (nutzerfreundlicher)
       topic = id + "/light/brightness/status";
       client.publish(topic.c_str(), msg);
     }
@@ -293,7 +305,7 @@ void callback(char *inTopic, byte *payload, unsigned int length) {
 
 // Light
 void startLight() {
-  memcpy(strip, lastLED, sizeof(lastLED)); // Copy last state in current state
+  memcpy(strip, lastLED, sizeof(lastLED)); // Kopiere den letzten Status in das aktuelle Array
   FastLED.show(); 
   light = true;
   Serial.println("LIGHT: ON");
@@ -308,40 +320,40 @@ void stopLight() {
   client.publish(topic.c_str(), "OFF");
 }
 
-// Clock:     timeClient holt die aktuelle Zeit uebers Internet vom NTP-Server
+// Clock:     timeClient holt die aktuelle Zeit vom NTP-Server
 void getTime() {
-  if (millis() - last > 30000 || last == 0) { // Last update > 3000 or just booted
+  if (millis() - last > 30000 || last == 0) { // Letzte Aktualisierung > 3000 order gerade gestartet
     timeClient.update();
     last = millis();
 
-    hour = timeClient.getHours(); // Get current hour
+    hour = timeClient.getHours(); // Stunde
     Serial.print("Time: ");
     Serial.print(hour);
-    if (hour > 12) { // get 12h format
+    if (hour > 12) { // 12h Format
       hour -= 12;
     }
-    minute = timeClient.getMinutes(); // Get current minute
+    minute = timeClient.getMinutes(); // Minute
     Serial.print(":");
     Serial.print(minute);
     Serial.println();
 
-    hourLED = map(hour, 0, 12, 0, NUM1 - 1); // Map hour to LED number
-    minuteLED = map(minute, 0, 60, 0, NUM1 - 1); // Map minute to LED number
+    hourLED = map(hour, 0, 12, 0, NUM - 1); // Map Stunde zu LED
+    minuteLED = map(minute, 0, 60, 0, NUM - 1); // Map Minute zu LED
   }
   updateClock();
 }
 
 void updateClock() {
   if (light) {
-    // Switch all LEDs on Strip off
-    for (int i = 0; i < NUM1; i++) {
+    // aalle LEDs aus
+    for (int i = 0; i < NUM; i++) {
       strip[i] = CHSV(0, 0, 0);
     }
     // zeigt Stunden- und Minuten-LED an: Stunden-LED hat Vorrang bei Gleichstand
-    if (hourLED != minuteLED) { // Second LED (minute)
+    if (hourLED != minuteLED) { // Zweite LED (Minute)
       strip[minuteLED] = CRGB(brightness, 0, 0);
     }
-    strip[hourLED] = CHSV(0, 0, brightness); // First LED
+    strip[hourLED] = CHSV(0, 0, brightness); // Erste LED (Stunde)
     FastLED.show();
   }
 }
@@ -349,10 +361,10 @@ void updateClock() {
 // Timer
 void checkButton() {
   int state = digitalRead(button);
-  if (state != lastState) { // State changed
+  if (state != lastState) { // Zustand verändert
     lastState = state;
-    if (state == HIGH) { // Button pressed
-      if (pomodoro) { // Timer on
+    if (state == HIGH) { // Button gedrückt
+      if (pomodoro) { // Timer an
         stopTimer();
       } else {
         startTimer();
@@ -367,24 +379,20 @@ void startTimer() {
   Serial.println("TIMER: ON");
   topic = id + "/timer/status";
   client.publish(topic.c_str(), "ON");
-  // uebermittelt Anzahl der bereits abgeschlossenen Timer-Zyklen an mqtt-Server
+  // übermittelt Anzahl der bereits abgeschlossenen Timer-Zyklen an MQTT-Server
   if (sinceBoot > 0) {
     topic = id + "/timer/counter/sinceBoot";
     sprintf(msg, "%d", sinceBoot);
     client.publish(topic.c_str(), msg);
   }
-  if (inRow == 0) {	// TODO: warum nicht inRow >= 0 ? then und else if unterscheiden sich nicht
-    topic = id + "/timer/counter/inRow";
-    sprintf(msg, "%d", inRow);
-    client.publish(topic.c_str() , msg);
-  } else if (inRow > 0) {
+  if (inRow >= 0) {
     topic = id + "/timer/counter/inRow";
     sprintf(msg, "%d", inRow);
     client.publish(topic.c_str() , msg);
   }
 }
 
-void stopTimer() {	// TODO: warum werden nicht die letzten aktuellen Daten an den mqtt-Server uebermittelt ?
+void stopTimer() {  // TODO: warum werden nicht die letzten aktuellen Daten an den mqtt-Server uebermittelt ?
   pomodoro = false;
   inRow = 0;
   Serial.println("TIMER: OFF");
@@ -393,23 +401,22 @@ void stopTimer() {	// TODO: warum werden nicht die letzten aktuellen Daten an de
 }
 
 void updateTimer() {
-  if (millis() - startTime > 1000 * 60 * timerWork) { // Work time finished
-    if (millis() - startTime > 1000 * 60 * (timerWork + timerBreak)) { // Timer finished: Arbeitszeit + Pausenzeit abgelaufen
+  if (millis() - startTime > 1000 * 60 * timerWork) { // Work time beendet
+    if (millis() - startTime > 1000 * 60 * (timerWork + timerBreak)) { // Timer beendet: Arbeitszeit + Pausenzeit abgelaufen
       sinceBoot++;
-      inRow++; // increment counter
-      return startTimer(); // Start new timer
+      inRow++; // erhöhe counter
+      return startTimer(); // Starte neuen Timer
     }
     if (light) {
-      // Pause laeuft:
-      //  mapt die Restpausenzeit relativ zur Arbeitszeit (nutzt nur einen Teil des Kreisbogens fuer Pausenanzeige)
-      //  zeigt in einem Kreisbogen am Ende des Rings in gruen die Restpause an
-      int remaining = map(1000 * 60 * timerBreak - (millis() - (startTime + 1000 * 60 * timerWork)), 0, 1000 * 60 * timerWork, NUM1 - 1, -1);
-      for (int i = 0; i < NUM1; i++) {
+      // Pause läuft:
+      //  mapt die Restpausenzeit und zeigt in einem Kreisbogen am Ende des Rings in grün die Restpause an
+      int remaining = map(1000 * 60 * timerBreak - (millis() - (startTime + 1000 * 60 * timerWork)), 0, 1000 * 60 * timerWork, NUM - 1, -1);
+      for (int i = 0; i < NUM; i++) {
         strip[i] = CHSV(0, 0, 0);
       }
       if (remaining >= 0) {
         for (int i = 0; i <= remaining; i++) {
-           strip[NUM1 - 1 - i] = CRGB(0, brightness, 0); // Green
+           strip[NUM - 1 - i] = CRGB(0, brightness, 0); // Grün
         }
       }
       FastLED.show();
@@ -418,9 +425,9 @@ void updateTimer() {
     if (light) {
        // Arbeitsphase laeuft:
        //  mapt verbleibende Arbeitszeit in diesem Timer-Zyklus relativ zur Laenge des Arbeitszyklus
-       //  auf eine LED-Nummer auf Strip
-       int past = map(1000 * 60 * timerWork - (millis() - startTime), 0, 1000 * 60 * timerWork, -1, NUM1 - 1);
-       for (int i = 0; i < NUM1; i++) {
+       //  auf eine LED-Nummer auf dem Strip
+       int past = map(1000 * 60 * timerWork - (millis() - startTime), 0, 1000 * 60 * timerWork, -1, NUM - 1);
+       for (int i = 0; i < NUM; i++) {
          strip[i] = CHSV(0, 0, 0);
        }
        if (past >= 0) {
@@ -436,25 +443,25 @@ void updateTimer() {
 // Sensoren
 // BH1750
 void bh1750() {
-  if (BH1750.hasValue() == true) {
+  if (BH1750.hasValue()) {
     // wenn neue Werte anliegen, neuen LUX-Wert lesen
     float lux = BH1750.getLux();
     BH1750.start();
     if (abs(lux - lastLux) > 3 || lastLux == 0) { // Value changed more than 3 since last measurement or just booted
       lastLux = lux;    // lux als neuer Referenzwert gemerkt
       if (automatic) { // falls Lichtsteuerung automatisch: brightness fuer die Anzeigen neu berechnet
-        brightness = map(constrain(lux, 8, 255), 0, 150, 8, 255); // Map Lux to brightness scale
+        brightness = map(constrain(lux, 8, 255), 0, 150, 8, 255); // Map Lux zu Brightness
       }
     }
     if (abs(lux - lastLuxSend) > 3 || lastLuxSend == 0) {
-          // an den mqtt-Server werden nur Aenderungen des LUX-Wertes von mehr als 3 uebermittelt
+          // an den MQTT-Server werden nur Änderungen des LUX-Wertes von mehr als 3 übermittelt
           // oder der neue Wert nach einem Neustart des Geraetes
-      if (millis() - lastBrightness > 5000 || lastBrightness == 0) { // Send lux through MQTT every 5 seconds if value changed more than 3
-            // um den mqtt-Server nicht mit Nachrichten zu ueberschwemmen, 
-            // muessen mindestens 5 Sekunden zwischen zwei Uebermittlungen liegen
+      if (millis() - lastBrightness > 5000 || lastBrightness == 0) {
+            // um den MQTT-Server nicht mit Nachrichten zu überschwemmen, 
+            // müssen mindestens 5 Sekunden zwischen zwei Übermittlungen liegen
         lastLuxSend = lux;
         topic = id + "/sens/lux";
-        dtostrf(lux, 3, 1, msg); // Convert float to char*
+        dtostrf(lux, 3, 1, msg); // Konvertiere float zu char*
         client.publish(topic.c_str(), msg);
         lastBrightness = millis();
       }
@@ -464,39 +471,37 @@ void bh1750() {
 
 // BME680
 void bme680() {
-  if (BME680.run()) { // fragt die Bsec-library, ob am bme680 neue Messwerte vorliegen
+  if (BME680.run()) { // fragt die Bsec-Library, ob am bme680 neue Messwerte vorliegen
     // new value arrived
-    String output = String(BME680.iaq);
-    output += ", " + String(BME680.iaqAccuracy);
+    String output = String(BME680.iaqAccuracy);
     output += ", " + String(BME680.temperature);
     output += ", " + String(BME680.humidity);
     output += ", " + String(BME680.staticIaq);
     output += ", " + String(BME680.co2Equivalent);
-    output += ", " + String(BME680.breathVocEquivalent);
     Serial.println(output);
 
-    // Temperature
+    // Temperatur
     float temp = BME680.temperature;
-    int h = map(constrain(temp, 15, 25), 15, 25, 240, 0); // Map temperature to HSV scale between 240, 0
-    if ((80 < h && h < 160) || !light) { // if light off or h green don't show
-          //	unterdrueckt Normalwerte, zeigt nur oberes und unteres Drittel der Temperatur-Range auf strip2 an
-      strip[NUM1 + 0] = CRGB::Black;
+    int h = map(constrain(temp, 15, 27), 15, 27, 120, 0); // Map temperature to HSV scale between 240, 0
+    if ((80 < h && h < 90) || !light) { // if light off or h green don't show
+          //  unterdrückt Normalwerte, zeigt nur oberes und unteres Drittel der Temperatur-Range auf strip2 an
+      strip2[0] = CRGB::Black;
     } else {
       Serial.println(h);
-      strip[NUM1 + 0] = CHSV(h, 255, brightness);
+      strip2[0] = CHSV(h, 255, brightness);
       FastLED.show();
-      lastLED[NUM1 + 0] = CHSV(h, 255, brightness); // Make copy
+      lastLED[0] = CHSV(h, 255, brightness); // Make copy
     }
     // Humidity
     float hum = BME680.humidity;
-    h = map(constrain(hum, 40, 60), 40, 60, 0, 240); // Map humidity to HSV scale between 0, 240
-    if ((80 < h && h < 160) || !light) { // if light off or h green don't show
-      strip[NUM1 + 1] = CRGB::Black;
+    h = map(constrain(hum, 40, 60), 40, 60, 0, 120); // Map humidity to HSV scale between 0, 240
+    if ((80 < h && h < 90) || !light) { // if light off or h green don't show
+      strip2[6] = CRGB::Black;
     } else {
       Serial.println(h);
-      strip[NUM1 + 1] = CHSV(h, 255, brightness);
+      strip2[6] = CHSV(h, 255, brightness);
       FastLED.show();
-      lastLED[NUM1 + 1] = CHSV(h, 255, brightness);
+      lastLED[6] = CHSV(h, 255, brightness);
     }
     // IAQ
     if (BME680.iaqAccuracy > 0) { // IAQ Accuracy above 0 to get safe values
@@ -508,6 +513,7 @@ void bme680() {
     Serial.print(" : ");
     Serial.println(BME680.bme680Status);
   }
+  sens = false;
 }
 
 // Loop
@@ -517,8 +523,10 @@ void loop() {
   }
   client.loop();
   checkButton();
-  bh1750();
-  bme680();
+  //if (sens) {
+   // bh1750();
+    bme680();
+  //}
   if (pomodoro) { // Timer
     updateTimer();
   } else {
