@@ -1,33 +1,15 @@
-Wir als Gruppe 13 haben uns viele Gedanken zu unserem Projekt gemacht. Am Anfang hatten wir alle viele Ideen und waren leicht überfordert, welche wir davon
-wirklich umsetzen wollen. Unser Anspruch ist es, kein Projekt für die Mülltonne bzw. für eine gute Note zu erschaffen, sondern am Ende ein Produkt auf dem 
-Tisch stehen zu habem, dass wir selbst im Alltag gerne benutzen. Daher haben wir uns nach viel hin- und her auf die smarte Pomodoro-Uhr geeinigt. 
+Wir als Gruppe 13 haben uns viele Gedanken zu unserem Projekt gemacht. Am Anfang hatten wir alle viele Ideen und waren leicht überfordert, welche wir davon wirklich umsetzen wollen. Unser Anspruch ist es, kein Projekt für die Mülltonne bzw. nur für eine gute Note zu erschaffen, sondern am Ende ein Produkt auf dem Tisch stehen zu haben, dass wir selbst im Alltag gerne benutzen würden. Daher haben wir uns nach viel hin- und her auf die smarte Pomodoro-Uhr geeinigt.
 
-Unsere Anforderungen sind dabei seit Beginn der Planung fest in vier Ebenenen unterteilt. Es gibt ein Grundgerüst, mit minimalen Anforderungen. 
-Diese Funktionen müssen gewährleistet sein, damit unser Produkt ein Sinn ergibt. Zudem haben wir uns drei logische Erweiterungen überlegt, 
-die wir nach Möglichkeit in die Uhr einbauen wollen. Wenn davon am Ende nicht alles fertig wird, oder noch nicht funktionstüchtig ist, haben wir trotzdem
-ein klasse Produkt. Mehr Erweiterungen sind natürlich jederzeit möglich, wir haben schließlich von Anatolij gelernt, dass man nicht ewig warten soll, bis 
-der vermeitlich "perfekte Moment" für die Vorstellung ist. Lieber eingeschränkte Funktionen, die nach Release noch verbessert werden und die Möglichkeit 
-sinnvolle Updates rauszubringen, als zu viel auf einmal zu wollen. Hier also die Anforderungen an uns selbst und das Produkt:
+Unsere Anforderungen sind dabei seit Beginn der Planung fest in vier Ebenen unterteilt. 
 
-Das Grundgerüst besteht natürlich aus der Uhr selbst. 
-Diese muss 3D gedruckt werden; für die Frontseite planen wir dunkles Plexiglas zu verwenden. Damit sieht man die LEDs, aber eben das Innenleben nicht. 
-Ein weiteres Muss ist ein Pomodoro Timer, da unsere Uhr ja zu 100% auf das Lernen ausgerichtet sein soll. Der Pomodor Timer kann über einen Start / Stop
-Button auf der Oberseite der Uhr bedient werden. Ansonsten hat die Uhr keine Knöpfe. Visuell unterstützt wird der Timer durch einen 24er LED Ring. Dieser
-kann dann später sowohl die Uhrzeit, als auch den Timer anzeigen. In der Mitte des großen LED Rings befindet sich ein weiterer, 8er LED Ring. 
-Da unsere Uhr mehrere Sensoren hat, wollen wir auch deren Zustände gerne visuell auf der Vorderseite durch die LEDs präsentieren. Dazu lasern wir kleine,
-passende Icons auf das Plexiglas. 
+Es gibt ein Grundgerüst, mit minimalen Anforderungen. Diese Funktionen müssen gewährleistet sein, damit unser Produkt einen Sinn ergibt. Zudem haben wir uns drei logische Erweiterungen überlegt, die wir nach Möglichkeit in die Uhr einbauen wollen. Wenn davon am Ende nicht alles fertig wird, oder noch nicht funktionstüchtig ist, haben wir trotzdem ein gutes Produkt. Mehr Erweiterungen sind natürlich jederzeit möglich, wir haben schließlich von Anatolij gelernt, dass man nicht ewig warten soll, bis der vermeindlich “perfekte Moment” für die Vorstellung ist. Lieber eingeschränkte Funktionen, die nach Release noch verbessert werden und die Möglichkeit sinnvolle Updates rauszubringen, als zu viel auf einmal zu wollen. Hier also die Anforderungen an uns selbst und das Produkt:
 
-Die erste Erweiterung ist ein Luftqualitätssensor, der erkennt, wenn die Luft im Zimmer des Studenten zu schlecht wird und dadurch das Lernen negativ
-beeinflusst. Ist dies der Fall, wird es visuell über den 8er LED Ring dargestellt. 
+Das Grundgerüst besteht natürlich aus der Uhr selbst. Diese muss 3D gedruckt werden; für die Frontseite planen wir dunkles Plexiglas zu verwenden. Damit sieht man zwar die LEDs, aber eben nicht das Innenleben. Ein weiteres Muss ist ein Pomodoro Timer, da unsere Uhr ja zu 100% auf das Lernen ausgerichtet sein soll. Der Pomodor Timer kann über einen Start / Stop Button auf der Oberseite der Uhr bedient werden. Ansonsten hat die Uhr keine Knöpfe. Visuell unterstützt wird der Timer durch einen 24er LED Ring. Dieser kann dann später sowohl die Uhrzeit, als auch den Timer anzeigen. In der Mitte des großen LED Rings befindet sich ein weiterer, 8er LED Ring. Da unsere Uhr mehrere Sensoren hat, wollen wir auch deren Zustände gerne visuell auf der Vorderseite durch die LEDs präsentieren. Dazu lasern wir kleine, passende Icons auf das Plexiglas.
 
-Die zweite Erweiterung sind andere Sensoren: Wir planen in dieser Stufe mit einem T&H Sensor, einem Licht Sensor, der die LEDs automatisch der Außenhelligkeit
-anpasst und einem Lautstärkesensor, der visuell Warungen ausgibt, wenn es beim Lernen zu laut wird. 
+Die erste Erweiterung ist ein Luftqualitätssensor, der erkennt, wenn die Luft im Zimmer des Studenten zu schlecht wird und dadurch das Lernen negativ beeinflusst. Ist dies der Fall, wird es visuell über den 8er LED Ring dargestellt.
 
-Die drittte und letzte Erweiterung ist für alle, die gerne Erfolge festhalten und feiern wollen. Direkt vorweg: Nein wir planen keine eingebaute Konfetti-
-kanone, wenn die Lernsession erfolgreich war. Auch wenn das sicherlich eine coole Idee wäre. 
-Wir wollen in dieser Stufe einen Newsletter am Ende der Woche mit "weekly stistics" dem User per Mail zuschicken. Hier wird festgehalten, wie viel gelernt
-wurde und wann man besonders produktiv ist. Dadurch hat der Student die Möglichkeit aufgrund seiner individuellen Statistiken genau dann zu lernen, wenn er
-am produktivsten ist. 
+Die zweite Erweiterung sind andere Sensoren: Wir planen in dieser Stufe mit einem T&H Sensor, einem Licht Sensor, der die LEDs automatisch der Außenhelligkeit anpasst und einem Lautstärkesensor, sodass visuell Warnungen ausgegeben werden können, wenn es beim Lernen zu laut wird.
 
-Das sind die verschiedenen Stufen der Anforderungen an unser Produkt, gestellt von uns selbst. Wenn wir die letzten Punkte aus Zeitgründen nicht schaffen,
-ist das nicht so schlimm, da wir ein gutes Grundgerüst haben und unsere Uhr trotzdem performt. Alles weitere kann später per Update problemlos ergänzt werden.
+Die drittte und letzte Erweiterung ist für alle, die gerne Erfolge festhalten und feiern wollen. Direkt vorweg: Nein wir planen keine eingebaute Konfettikanone, wenn die Lernsession erfolgreich war. Auch wenn das sicherlich eine coole Idee wäre. Wir wollen in dieser Stufe einen Newsletter am Ende der Woche mit “weekly statistics” dem User per Mail zuschicken. Hier wird festgehalten, wie viel gelernt wurde und wann man besonders produktiv ist. Dadurch hat der Student die Möglichkeit aufgrund seiner individuellen Statistiken genau dann zu lernen, wenn er am produktivsten ist.
+
+Das sind die verschiedenen Stufen der Anforderungen an unser Produkt, gestellt von uns selbst. Wenn wir die letzten Punkte aus Zeitgründen nicht schaffen, ist das nicht so schlimm, da wir ein gutes Grundgerüst haben und unsere Uhr trotzdem performt. Alles weitere kann später per Update problemlos ergänzt werden.
