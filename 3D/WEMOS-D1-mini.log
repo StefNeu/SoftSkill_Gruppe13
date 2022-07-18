@@ -1,0 +1,41 @@
+STEP translation to Solid Edge
+Date: Montag,Juni 20,2022 08:18
+Source File: C:\Users\neuma\Documents\GitHub\SoftSkill_Gruppe13\3D\WEMOS-D1-mini.step
+Author: Unknown
+Organization: Unknown
+Source System: Autodesk Translation Framework v10.6.0.1341
+
+Hardware:
+Processor: AMD Ryzen 7 2700X Eight-Core Processor         
+Operating System: Windows 10 Professional
+Installed Memory: 31.92 GB
+
+Software Information
+Parasolid Version: 34.0.153
+PSBodyShop Version: 34.0.110
+Step Adapter Version: 9.0.92
+Solid Edge Version: 222.00.00.132 x64
+
+Step Import Options
+Import Faceted Bodies: On
+Import Check Bodies: Off
+Import Curves: On
+Import DoNotSave: On
+Import Multiple Bodies As Single Part File: On
+Import Stitch Surfaces: On
+Import Boolean Solids: On
+Make Base Feature: On
+Simplify Geometry: On
+Import Imprint Curves: On
+Import Drive: C:
+Import Stitch Surfaces: On
+Import Surfaces: On
+Import Output Path: C:\Users\neuma\Documents\GitHub\SoftSkill_Gruppe13\3D
+Import Enable Default Output Path: On
+Import PMI: Off
+Import As Internal Components: Off
+Import Path: 
+
+Translating to Parasolid data types...
+Translation process completed
+Total time required to translate and post process:00 : 00 : 12

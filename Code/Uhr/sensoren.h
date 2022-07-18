@@ -24,11 +24,15 @@ class sensoren{
   bool button();
   
   
+  
 
   private:
   DHTesp dht;
   Adafruit_BMP085 bmp;
   hp_BH1750 hp;
+  
+  double temperatureSave = 0.0;
+  double humiditySave = 0.0;
   
 
 };

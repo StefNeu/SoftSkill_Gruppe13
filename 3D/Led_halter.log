@@ -1,0 +1,37 @@
+Solid Edge in 3MF konvertieren
+Datum: Tuesday,June 21,2022 02:08PM
+Ausgabedatei: C:\Users\neuma\OneDrive\Dokumente\GitHub\SoftSkill_Gruppe13\3D\Led_halter.3mf
+Autor: Steffen Neumann
+Organisation: SoftSkills2022
+Ausgangssystem: SOLID EDGE
+
+Hardware:
+Prozessor: AMD Ryzen 5 3500U with Radeon Vega Mobile Gfx  
+Betriebssystem: Windows 10
+Installierter Speicher: 13.94 GB
+
+Software-Informationen:
+Parasolid-Version: 34.0.153
+PSBodyshop-Version: 34.0.110
+3MF-Adapterversion:9.0.87
+Solid Edge-Version: 222.00.00.132 x64
+
+3MF-Exportoptionen
+Konstruktionsvolumen exportieren: Aus
+Angezeigte Teile exportieren: Aus
+Protokollierung aktivieren:Ein
+AllowInvalid3mfObjects:Aus
+Reduzierte Baugruppe exportieren:On
+Einheiten exportieren:Millimeters
+Toleranzwert exportieren:0.001000
+Toleranztyp exportieren:Fine
+Flächenplanwinkelwert exportieren:0.523599
+Autor exportieren:Steffen Neumann
+Beschreibung exportieren:Uhr Unterteil
+Organisation exportieren:SoftSkills2022
+Programmname exportieren:Uhr
+
+Konvertierungsfortschritt:
+Phase 1 von 1 - Parasolid in Fremddatentypen konvertieren...
+Konvertierungsvorgang ist abgeschlossen
+Zum Konvertieren benötigte Zeit:00 : 00 : 00
