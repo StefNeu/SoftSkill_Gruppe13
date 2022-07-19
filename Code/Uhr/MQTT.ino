@@ -1,4 +1,8 @@
 // Variables
+
+// ID
+#define ID 1
+
 // MQTT
 const char *mqtt_server = "mqtt.iot.informatik.uni-oldenburg.de";
 const int mqtt_port = 2883;
